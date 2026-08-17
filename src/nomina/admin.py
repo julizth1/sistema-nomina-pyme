@@ -1,7 +1,10 @@
 from django.contrib import admin
+from .models import Marcacion, FacturaNomina
 
-# Register your models here.
-from django.contrib import admin
-from .models import Nomina
+@admin.register(Marcacion)
+class MarcacionAdmin(admin.ModelAdmin):
+    list_display = ('empleado', 'fecha', 'hora_entrada_real', 'hora_salida_real')
 
-admin.site.register(Nomina)
+@admin.register(FacturaNomina)
+class FacturaNominaAdmin(admin.ModelAdmin):
+    list_display = ('empleado', 'periodo_inicio', 'periodo_fin', 'neto_recibir')

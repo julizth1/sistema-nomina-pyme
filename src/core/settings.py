@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 
     # Agrega tus dos apps aquí:
+    'rest_framework',
     'colaboradores',
     'nomina',
 ]
