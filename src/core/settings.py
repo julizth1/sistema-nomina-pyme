@@ -37,6 +37,10 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+
+    # Agrega tus dos apps aquí:
+    'colaboradores',
+    'nomina',
 ]
 
 MIDDLEWARE = [
