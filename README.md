@@ -67,11 +67,10 @@ python manage.py migrate
 ```bash
 python manage.py createsuperuser
 ```
---
 ---
 ### 6. Iniciar el servidor de desarrollo
 ```bash
-python manage.py runserver```
---
+python manage.py runserver
+```
 
 
