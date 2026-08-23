@@ -1,0 +1,28 @@
+[
+{
+  "model": "colaboradores.empleado",
+  "pk": 1,
+  "fields": {
+    "employee_id": 1,
+    "cedula": "1000233564",
+    "nombre": "Alexis Alfredo Barrios Martínez",
+    "tipo_rol": "Operativo",
+    "cargo": "Auxiliar de Bodega",
+    "salario_basico": "1750000.00",
+    "grupo_descanso": "2"
+  }
+},
+{
+  "model": "colaboradores.empleado",
+  "pk": 2,
+  "fields": {
+    "employee_id": 2,
+    "cedula": "1000233565",
+    "nombre": "Sergio Elías Vergara Castillo",
+    "tipo_rol": "Operativo",
+    "cargo": "Auxiliar de Bodega",
+    "salario_basico": "1750000.00",
+    "grupo_descanso": "2"
+  }
+}
+]

@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Módulo de Nómina | Pyme Cloud</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <style>
+        body { background-color: #f4f6f9; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        #facturaImpresion { display: none; }
+        @media print {
+            body * { visibility: hidden; }
+            #facturaImpresion, #facturaImpresion * { visibility: visible; }
+            #facturaImpresion { display: block !important; position: absolute; left: 0; top: 0; width: 100%; font-family: 'Courier New', Courier, monospace; font-size: 13px; }
+            .no-print { display: none !important; }
+            .tabla-factura th, .tabla-factura td { padding: 4px 8px; border: 1px solid #000 !important; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container my-4 no-print">
+        <!-- ENCABEZADO Y BOTÓN REGRESO -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <a href="/factura/" class="btn btn-outline-secondary btn-sm shadow-sm"><i class="bi bi-arrow-left me-1"></i> Volver al Panel</a>
+            <span class="btn btn-primary fw-bold text-white px-3" style="pointer-events: none;">Módulo de Nómina</span>
+        </div>
+
+        <!-- ALERTAS DE MENSAJES -->
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <!-- 1. CARGA MASIVA DE MARCACIONES DESDE EXCEL -->
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-body py-3">
+                <h6 class="fw-bold text-dark mb-2"><i class="bi bi-file-earmark-excel me-2 text-success"></i>Cargar Asistencia y Marcaciones desde Excel</h6>
+                <form action="/cargar-excel/" method="POST" enctype="multipart/form-data" class="row g-2 align-items-center">
+                    {% csrf_token %}
+                    <div class="col-md-9">
+                        <input type="file" name="archivo_excel" class="form-control" accept=".xlsx, .xls" required>
+                    </div>
+                    <div class="col-md-3">
+                        <button type="submit" class="btn btn-success w-100 fw-bold">
+                            <i class="bi bi-upload me-1"></i> Procesar Excel
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- 2. TABLA DE NÓMINAS CALCULADAS -->
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-header bg-white py-3">
+                <h4 class="mb-0 text-secondary fw-bold"><i class="bi bi-grid-3x3-gap-fill me-2"></i>Nóminas Calculadas</h4>
+            </div>
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-md-4 d-flex">
+                        <input type="text" class="form-control form-control-sm me-2" placeholder="Buscar...">
+                        <button class="btn btn-outline-secondary btn-sm" type="button">Buscar</button>
+                    </div>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-hover table-bordered align-middle text-center">
+                        <thead class="table-light">
+                            <tr class="text-secondary small fw-bold">
+                                <th>Nombre del Empleado</th>
+                                <th>Fecha</th>
+                                <th>Básico</th>
+                                <th>Días Trab.</th>
+                                <th>Auxilio Transporte</th>
+                                <th>Total Devengado</th>
+                                <th>Salud (4%)</th>
+                                <th>Pensión (4%)</th>
+                                <th>Total Deducido</th>
+                                <th>Total Neto</th>
+                            </tr>
+                        </thead>
+                        <tbody class="small">
+                            {% if excel_cargado %}
+                                {% for emp in empleados_tabla %}
+                                <tr>
+                                    <td class="fw-bold text-dark text-start ps-3">{{ emp.nombre }}</td>
+                                    <td>2026-08-22</td>
+                                    <td>${{ emp.salario_basico_formatted }}</td>
+                                    <td>13</td>
+                                    <td>$81,000</td>
+                                    <td>${{ emp.total_devengado_formatted }}</td>
+                                    <td>${{ emp.salud_formatted }}</td>
+                                    <td>${{ emp.pension_formatted }}</td>
+                                    <td>${{ emp.total_deducido_formatted }}</td>
+                                    <td class="fw-bold text-success">${{ emp.total_neto_formatted }}</td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="10" class="text-muted py-3">No hay datos en el archivo cargado.</td>
+                                </tr>
+                                {% endfor %}
+                            {% else %}
+                                <tr>
+                                    <td colspan="10" class="text-muted py-4">
+                                        <i class="bi bi-file-earmark-arrow-up me-1 text-success"></i> Seleccione un archivo Excel y haga clic en <strong>Procesar Excel</strong> para generar el cálculo de nómina.
+                                    </td>
+                                </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. CONTROL DE MARCACIÓN Y LIQUIDACIÓN INDIVIDUAL -->
+        <div id="formGenerador" class="card shadow-sm border-0">
+            <div class="card-header bg-white py-3">
+                <h5 class="mb-0 text-primary fw-bold"><i class="bi bi-clock-history me-2"></i>Control de Marcación y Liquidación Individual</h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-3 mb-3">
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold">Empleado</label>
+                        <select id="selectEmpleado" class="form-select" onchange="cargarEmpleado()">
+                            <option value="" selected disabled>-- Seleccione --</option>
+                            {% for emp in empleados_select %}
+                                <option value="{{ emp.id }}" 
+                                        data-salario="{{ emp.salario_basico }}" 
+                                        data-cargo="{{ emp.cargo }}" 
+                                        data-cedula="{{ emp.cedula }}" 
+                                        data-nombre="{{ emp.nombre }}"
+                                        data-entrada="{{ emp.hora_entrada_teorica|time:'H:i'|default:'02:00' }}"
+                                        data-salida="{{ emp.hora_salida_teorica|time:'H:i'|default:'11:00' }}"
+                                        data-extras="{{ emp.total_horas_extras_quincena }}">
+                                    {{ emp.nombre }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold">Entrada Registrada</label>
+                        <input type="time" id="entradaReal" class="form-control" value="02:00">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold">Salida Registrada</label>
+                        <input type="time" id="salidaReal" class="form-control" value="11:00">
+                    </div>
+                </div>
+
+                <div class="row g-3 align-items-end">
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold">Sueldo Básico ($)</label>
+                        <input type="number" id="sueldoBasico" class="form-control" readonly placeholder="0">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold">Horas Extras Acumuladas (13 Días)</label>
+                        <input type="number" id="horasExtras" class="form-control bg-light fw-bold text-danger" readonly value="0">
+                    </div>
+                    <div class="col-md-4">
+                        <button type="button" class="btn btn-success w-100 fw-bold py-2" onclick="generarComprobante()">
+                            <i class="bi bi-printer me-1"></i> Imprimir Liquidación
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PLANTILLA DE IMPRESIÓN (LA ESMERALDA SAS) -->
+    <div id="facturaImpresion" class="p-4">
+        <div class="text-center fw-bold border-bottom pb-2 mb-2">
+            <div>PRODUCTORA Y COMERCIALIZADORA LA ESMERALDA SAS</div>
+            <div>NIT. 901.799.221-9</div>
+            <div class="mt-1">NÓMINA DEL PERÍODO ACTUAL (13 DÍAS)</div>
+        </div>
+
+        <table class="w-100 mb-3">
+            <tr><td class="fw-bold" width="30%">NOMBRE DEL EMPLEADO:</td><td id="pNombre">-</td></tr>
+            <tr><td class="fw-bold">C.C :</td><td id="pCedula">-</td></tr>
+            <tr><td class="fw-bold">CARGO:</td><td id="pCargo">-</td></tr>
+            <tr><td class="fw-bold">DÍAS LABORADOS:</td><td>13</td></tr>
+        </table>
+
+        <table class="table table-bordered tabla-factura w-100 mb-3">
+            <thead>
+                <tr class="fw-bold"><th>INGRESOS</th><th class="text-end" width="25%">VALOR</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>SUELDO BÁSICO PROPORCIONAL</td><td class="text-end" id="pSueldo">$0</td></tr>
+                <tr><td>AUXILIO DE TRANSPORTE</td><td class="text-end" id="pAuxilio">$81.000</td></tr>
+                <tr><td>HORAS EXTRAS / RECARGOS</td><td class="text-end" id="pExtras">$0</td></tr>
+                <tr class="fw-bold"><td>TOTAL DEVENGADO:</td><td class="text-end" id="pDevengado">$0</td></tr>
+            </tbody>
+        </table>
+
+        <table class="table table-bordered tabla-factura w-100 mb-3">
+            <thead>
+                <tr class="fw-bold"><th>DEDUCCIONES</th><th class="text-end" width="25%">VALOR</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>APORTES A SALUD (4%)</td><td class="text-end" id="pSalud">$0</td></tr>
+                <tr><td>APORTES A PENSIÓN (4%)</td><td class="text-end" id="pPension">$0</td></tr>
+                <tr class="fw-bold"><td>TOTAL DEDUCCIONES:</td><td class="text-end" id="pDeducciones">$0</td></tr>
+            </tbody>
+        </table>
+
+        <div class="d-flex justify-content-between border-top border-bottom py-2 fw-bold fs-5 mb-5">
+            <span>NETO A RECIBIR:</span>
+            <span id="pNeto">$0</span>
+        </div>
+
+        <div class="mt-5 pt-4 border-top w-50">
+            <div>RECIBÍ: ____________________________________</div>
+            <div class="mt-1">C.C No.</div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function cargarEmpleado() {
+            const select = document.getElementById('selectEmpleado');
+            const opt = select.options[select.selectedIndex];
+            
+            document.getElementById('sueldoBasico').value = opt.getAttribute('data-salario') || 0;
+            document.getElementById('entradaReal').value = opt.getAttribute('data-entrada') || "02:00";
+            document.getElementById('salidaReal').value = opt.getAttribute('data-salida') || "11:00";
+            
+            const extrasAcumuladas = opt.getAttribute('data-extras') || 0;
+            document.getElementById('horasExtras').value = extrasAcumuladas;
+        }
+
+        function generarComprobante() {
+            const select = document.getElementById('selectEmpleado');
+            if (!select.value) { alert("Seleccione un empleado."); return; }
+            
+            const opt = select.options[select.selectedIndex];
+            const sueldo = parseFloat(opt.getAttribute('data-salario')) || 0;
+            const extras = parseFloat(document.getElementById('horasExtras').value) || 0;
+            
+            const valorExtra = Math.round((sueldo / 240) * 1.25 * extras);
+            const auxilio = 81000;
+            const sueldoPeriodo = Math.round((sueldo / 30) * 13);
+            
+            const devengado = sueldoPeriodo + valorExtra + auxilio;
+            const salud = Math.round(sueldoPeriodo * 0.04);
+            const pension = Math.round(sueldoPeriodo * 0.04);
+            const deducciones = salud + pension;
+            const neto = devengado - deducciones;
+
+            const format = (v) => new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(v);
+
+            document.getElementById('pNombre').innerText = opt.getAttribute('data-nombre');
+            document.getElementById('pCedula').innerText = opt.getAttribute('data-cedula');
+            document.getElementById('pCargo').innerText = opt.getAttribute('data-cargo');
+            document.getElementById('pSueldo').innerText = format(sueldoPeriodo);
+            document.getElementById('pExtras').innerText = format(valorExtra);
+            document.getElementById('pDevengado').innerText = format(devengado);
+            document.getElementById('pSalud').innerText = format(salud);
+            document.getElementById('pPension').innerText = format(pension);
+            document.getElementById('pDeducciones').innerText = format(deducciones);
+            document.getElementById('pNeto').innerText = format(neto);
+
+            window.print();
+        }
+    </script>
+</body>
+</html>
