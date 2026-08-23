@@ -2,67 +2,172 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Generador de Comprobantes de Nómina</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Nómina Pyme | Gestión Empresarial</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <style>
+        :root { --primary-color: #1e293b; --accent-color: #0ea5e9; }
+        body { background-color: #f8fafc; font-family: 'Segoe UI', system-ui, sans-serif; }
+        .navbar-custom { background-color: var(--primary-color); }
+        .card-custom { border: none; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+        .header-gradient { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: white; }
+    </style>
 </head>
-<body class="bg-light">
-<div class="container my-5">
-    <h2 class="mb-4">Generación de Comprobantes de Pago</h2>
-    <div class="card p-4 shadow-sm">
-        <form id="form-nomina" method="POST" action="/api/generar-factura/">
-            <div class="mb-3">
-                <label class="form-label">Empleado</label>
-                <select name="empleado_id" class="form-select" required>
-                    <option value="1">Sergio Elías Vergara Castillo (C.C. 1.003.044.253)</option>
-                </select>
+<body>
+
+    <!-- Navegación Principal -->
+    <nav class="navbar navbar-expand-lg navbar-dark navbar-custom shadow-sm mb-4">
+        <div class="container-fluid px-4">
+            <a class="navbar-brand fw-bold" href="#"><i class="bi bi-wallet2 text-info me-2"></i>Nómina Pyme Cloud</a>
+            <div class="d-flex align-items-center">
+                <a href="/admin/" class="btn btn-outline-light btn-sm me-2"><i class="bi bi-speedometer2 me-1"></i> Panel Jazzmin</a>
+                <a href="/api/empleados/" target="_blank" class="btn btn-info btn-sm text-white"><i class="bi bi-code-slash me-1"></i> API REST</a>
             </div>
-            <div class="row">
-                <div class="col-md-6 mb-3">
-                    <label class="form-label">Sueldo Básico</label>
-                    <input type="number" name="sueldo_basico" class="form-control" value="1751000" readonly>
+        </div>
+    </nav>
+
+    <div class="container mb-5">
+        <!-- Encabezado del Módulo -->
+        <div class="card card-custom header-gradient p-4 mb-4">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="fw-bold mb-1"><i class="bi bi-file-earmark-spreadsheet me-2"></i>Generación de Comprobantes de Pago</h2>
+                    <p class="text-light mb-0 opacity-75">Automatización de nómina y liquidación en tiempo real para Pymes</p>
                 </div>
-                <div class="col-md-6 mb-3">
-                    <label class="form-label">Horas Recargos Nocturnas</label>
-                    <input type="number" step="0.5" id="horas_nocturnas" class="form-control" value="16.0">
+                <span class="badge bg-success px-3 py-2 fs-6"><i class="bi bi-check-circle me-1"></i> Sistema Activo</span>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <!-- Formulario de Entrada -->
+            <div class="col-lg-5">
+                <div class="card card-custom p-4 bg-white h-100">
+                    <h5 class="fw-bold text-dark mb-3"><i class="bi bi-person-gear me-2 text-primary"></i>Datos del Colaborador</h5>
+                    <form id="payrollForm">
+                        <div class="mb-3">
+                            <label class="form-label font-monospace fw-semibold">Seleccionar Empleado</label>
+                            <select id="selectEmpleado" class="form-select form-select-lg" required onchange="actualizarSalario()">
+                                <option value="" selected disabled>-- Seleccione un trabajador --</option>
+                                {% for emp in empleados %}
+                                    <option value="{{ emp.id }}" data-salario="{{ emp.salario_basico }}" data-cargo="{{ emp.cargo }}" data-cedula="{{ emp.cedula }}">
+                                        {{ emp.nombre }} (C.C. {{ emp.cedula }})
+                                    </option>
+                                {% empty %}
+                                    <option value="">No hay empleados registrados</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label font-monospace fw-semibold">Sueldo Básico Base ($)</label>
+                            <input type="number" id="sueldoBasico" class="form-control" readonly placeholder="0.00">
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label font-monospace fw-semibold">Horas Recargos Nocturnos</label>
+                            <input type="number" id="horasNocturnas" class="form-control" value="0" min="0" step="0.5">
+                        </div>
+
+                        <button type="button" class="btn btn-primary w-100 py-2 fw-bold shadow-sm" onclick="calcularNomina()">
+                            <i class="bi bi-calculator me-1"></i> Procesar y Generar Liquidación
+                        </button>
+                    </form>
                 </div>
             </div>
-            <button type="button" onclick="calcularNominaJS()" class="btn btn-primary">Calcular y Vista Previa</button>
-        </form>
+
+            <!-- Resumen y Desprendible Generado -->
+            <div class="col-lg-7">
+                <div class="card card-custom p-4 bg-white h-100">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="fw-bold text-dark mb-0"><i class="bi bi-receipt-cutoff me-2 text-success"></i>Desprendible de Pago</h5>
+                        <button class="btn btn-outline-secondary btn-sm" onclick="window.print()"><i class="bi bi-printer me-1"></i> Imprimir</button>
+                    </div>
+                    <hr>
+
+                    <div id="resultadoDetalle">
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-6">
+                                <small class="text-muted d-block">Cargo:</small>
+                                <span id="lblCargo" class="fw-semibold text-dark">-</span>
+                            </div>
+                            <div class="col-md-6">
+                                <small class="text-muted d-block">Documento:</small>
+                                <span id="lblCedula" class="fw-semibold text-dark">-</span>
+                            </div>
+                        </div>
+
+                        <div class="table-responsive mb-3">
+                            <table class="table table-bordered align-middle">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Concepto</th>
+                                        <th class="text-end">Devengados</th>
+                                        <th class="text-end">Deducciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>Sueldo Básico</td>
+                                        <td class="text-end" id="valSueldo">$0</td>
+                                        <td class="text-end">-</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Recargos Nocturnos</td>
+                                        <td class="text-end" id="valRecargos">$0</td>
+                                        <td class="text-end">-</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Aportes Salud & Pensión (8%)</td>
+                                        <td class="text-end">-</td>
+                                        <td class="text-end text-danger" id="valDeducciones">$0</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="p-3 bg-light rounded-3 d-flex justify-content-between align-items-center">
+                            <span class="fs-5 fw-bold text-dark">Neto a Recibir:</span>
+                            <span id="valNeto" class="fs-4 fw-bold text-success">$0</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <div id="resultado" class="card p-4 shadow-sm mt-4 d-none">
-        <h4>Resumen de Desprendible</h4>
-        <p><strong>Total Devengado:</strong> $<span id="lbl-devengado"></span></p>
-        <p><strong>Total Deducciones:</strong> $<span id="lbl-deducciones"></span></p>
-        <p><strong>Neto a Recibir:</strong> $<span id="lbl-neto"></span></p>
-    </div>
-</div>
+    <!-- Script para cálculos de la Pyme -->
+    <script>
+        function actualizarSalario() {
+            const select = document.getElementById('selectEmpleado');
+            const selectedOption = select.options[select.selectedIndex];
+            document.getElementById('sueldoBasico').value = selectedOption.getAttribute('data-salario') || 0;
+            document.getElementById('lblCargo').innerText = selectedOption.getAttribute('data-cargo') || '-';
+            document.getElementById('lblCedula').innerText = selectedOption.getAttribute('data-cedula') || '-';
+        }
 
-<script>
-function calcularNominaJS() {
-    const sueldoBase = 1751000;
-    const dias = 15;
-    const devengadoSueldo = (sueldoBase / 30) * dias;
-    const auxTransporte = (249095 / 30) * dias;
-    
-    const horasNocturnas = parseFloat(document.getElementById('horas_nocturnas').value) || 0;
-    const valorHoraOrdinaria = sueldoBase / 240;
-    const recargoNocturno = (valorHoraOrdinaria * 0.35) * horasNocturnas;
+        function calcularNomina() {
+            const sueldo = parseFloat(document.getElementById('sueldoBasico').value) || 0;
+            const horasRN = parseFloat(document.getElementById('horasNocturnas').value) || 0;
 
-    const totalDevengado = devengadoSueldo + auxTransporte + recargoNocturno;
-    
-    const ibc = devengadoSueldo + recargoNocturno;
-    const salud = ibc * 0.04;
-    const pension = ibc * 0.04;
-    const totalDeducciones = salud + pension;
-    
-    const neto = totalDevengado - totalDeducciones;
+            if (sueldo === 0) {
+                alert("Por favor seleccione un empleado válido.");
+                return;
+            }
 
-    document.getElementById('lbl-devengado').innerText = totalDevengado.toLocaleString('es-CO');
-    document.getElementById('lbl-deducciones').innerText = totalDeducciones.toLocaleString('es-CO');
-    document.getElementById('lbl-neto').innerText = neto.toLocaleString('es-CO');
-    document.getElementById('resultado').classList.remove('d-none');
-}
-</script>
+            const valorHora = sueldo / 240;
+            const recargoNocturno = horasRN * valorHora * 1.35;
+            const totalDevengado = sueldo + recargoNocturno;
+            const deducciones = totalDevengado * 0.08;
+            const netoRecibir = totalDevengado - deducciones;
+
+            const formatCOP = (val) => new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(val);
+
+            document.getElementById('valSueldo').innerText = formatCOP(sueldo);
+            document.getElementById('valRecargos').innerText = formatCOP(recargoNocturno);
+            document.getElementById('valDeducciones').innerText = formatCOP(deducciones);
+            document.getElementById('valNeto').innerText = formatCOP(netoRecibir);
+        }
+    </script>
 </body>
 </html>
