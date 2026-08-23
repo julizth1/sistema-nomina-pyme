@@ -26,7 +26,7 @@ Plataforma web desarrollada en Python y Django orientada a la automatización, c
 
 Las diapositivas en PDF con el resumen del problema, la solución tecnológica y los diagramas de arquitectura se encuentran en:
 
-* 📄 **[Ver Diapositivas de la Presentación ]([docs/presentacion.pdf](https://canva.link/2qnv33r2ba3f17e))**
+* 📄 **[Ver Diapositivas de la Presentación ]([https://canva.link/2qnv33r2ba3f17e))**
 
 ---
 
