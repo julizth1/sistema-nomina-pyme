@@ -21,12 +21,11 @@ Plataforma web desarrollada en Python y Django orientada a la automatización, c
 * **Procesamiento de Asistencia:** Cargar masivamente archivos de Excel con marcaciones para períodos de 13 días, aplicando reglas dinámicas de horario (límite 08:00 AM para domingos y 11:00 AM para días ordinarios).
 
 ---
-
 ## 📁 Documentación y Presentación del Proyecto
 
-Las diapositivas en PDF con el resumen del problema, la solución tecnológica y los diagramas de arquitectura se encuentran en:
+Las diapositivas con el resumen del problema, la solución tecnológica y los diagramas de arquitectura se encuentran en:
 
-* 📄 **[Ver Diapositivas de la Presentación ]([https://canva.link/2qnv33r2ba3f17e))**
+* 📄 **[Ver Diapositivas de la Presentación](https://canva.link/2qnv33r2ba3f17e)**
 
 ---
 
