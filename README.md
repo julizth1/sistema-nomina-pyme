@@ -45,9 +45,33 @@ git clone [https://github.com/julizth1/sistema-nomina-pyme.git](https://github.c
 cd sistema-nomina-pyme
 ```
 ---
-"""2. Crear y activar el entorno virtual
+### 2. Crear y activar el entorno virtual
 ```bash
 # En Windows (Git Bash):
 source venv/Scripts/activate
 ```
+---
+### 3. Instalar dependencias del proyecto
+```bash
+pip install -r src/requirements.txt
+```
+---
+### 4. Sincronizar esquemas y ejecutar migraciones en PostgreSQL
+```bash
+cd src
+python manage.py makemigrations
+python manage.py migrate
+```
+---
+### 5. Crear un Superusuario (Administrador)
+```bash
+python manage.py createsuperuser
+```
+--
+---
+### 6. Iniciar el servidor de desarrollo
+```bash
+python manage.py runserver```
+--
+
 
