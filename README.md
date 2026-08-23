@@ -45,3 +45,12 @@ Las diapositivas en PDF con el resumen del problema, la solución tecnológica y
 git clone [https://github.com/julizth1/sistema-nomina-pyme.git](https://github.com/julizth1/sistema-nomina-pyme.git)
 cd sistema-nomina-pyme
 
+### 2. Crear y activar el entorno virtual
+```bash
+python -m venv venv
+# En Windows (Git Bash)
+source venv/Scripts/activate
+
+
+
+
