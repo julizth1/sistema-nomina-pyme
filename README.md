@@ -37,21 +37,52 @@ Las diapositivas en PDF con el resumen del problema, la solución tecnológica y
 3. **Capa de Base de Datos:** Persistencia en PostgreSQL para almacenar empleados, marcaciones reales y comprobantes de liquidación.
 
 ---
-
-## 🚀 Instrucciones de Ejecución Local
-
-### 1. Clonar el repositorio
-```bash
+##🚀 Instrucciones de Ejecución Local
+###1. Clonar el repositorio
+Bash
 git clone [https://github.com/julizth1/sistema-nomina-pyme.git](https://github.com/julizth1/sistema-nomina-pyme.git)
 cd sistema-nomina-pyme
-
----
-
-### 2. Crear y activar el entorno virtual
-```bash
+2. Crear y activar el entorno virtual
+Bash
 python -m venv venv
-# En Windows (Git Bash)
+
+# En Windows (Git Bash):
 source venv/Scripts/activate
+
+# En macOS / Linux:
+source venv/bin/activate
+3. Instalar dependencias del proyecto
+Bash
+pip install -r src/requirements.txt
+4. Configurar variables de entorno y Base de Datos (PostgreSQL)
+Asegúrate de tener un servidor de PostgreSQL corriendo localmente o en la nube (Render / Supabase), o configura las credenciales en el archivo src/core/settings.py:
+
+Python
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'tu_nombre_db',
+        'USER': 'tu_usuario',
+        'PASSWORD': 'tu_password',
+        'HOST': 'localhost',
+        'PORT': '5432',
+    }
+}
+5. Sincronizar esquemas y ejecutar migraciones
+Bash
+cd src
+python manage.py makemigrations
+python manage.py migrate
+6. Crear un Superusuario (Administrador Jazzmin)
+Bash
+# En Windows Git Bash:
+winpty python manage.py createsuperuser
+
+# En terminal estándar:
+python manage.py createsuperuser
+7. Iniciar el servidor de desarrollo
+Bash
+python manage.py runserver
 
 
 
